@@ -14,7 +14,7 @@ create-server = (port=default-port, protocol=default-protcol) ->
   server.port = port
   server.protocol = protocol
   server.url = "#{protocol}://localhost:#{port}"
-  return server
+  server
 
 create-get-response = (text, content-type=default-content-type) ->
   response-fn = (req, res) ->
@@ -28,7 +28,7 @@ create-chunk-response = (chunks, content-type=default-content-type) ->
     for chunk in chunks then res.write chunk
     res.end!
 
-create-post-validator = (text, expect-fn) ->
+create-post-validator = (expect-fn) ->
   response-fn = (req, res) ->
     data = ''
     req.on 'data', (_) -> data += _
@@ -36,7 +36,19 @@ create-post-validator = (text, expect-fn) ->
       res.writeHead 200, 'content-type': 'text/plain'
       res.write data
       res.end()
-      expect-fn data
+      expect-fn data, req, res
+
+patch-boundaries = (text, {headers}) ->
+  if (headers['content-type'] && headers['content-type'].indexOf('boundary=') >= 0)
+    boundary = headers['content-type'].split('boundary=')[1]
+    return text.replace(/__BOUNDARY__/g, boundary)
+  text
+
+add-route-response = (server, route, response-fn) ->
+  server.on route, response-fn
+
+make-full-route = (server, route) ->
+  "#{server.url}#{route}"
 
 module.exports =
   port: default-port
@@ -45,3 +57,6 @@ module.exports =
   createGetResponse: create-get-response
   createChunkResponse: create-chunk-response
   createPostValidator: create-post-validator
+  patchBoundaries: patch-boundaries
+  addRouteResponse: add-route-response
+  makeFullRoute: make-full-route
