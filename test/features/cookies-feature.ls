@@ -14,8 +14,11 @@ require! {
 }
 
 server = createServer!
-valid-url = "#{server.url}/valid"
-invalid-url = "#{server.url}/invalid"
+
+valid-route = '/valid'
+invalid-route = '/invalid'
+valid-url = "#{server.url}#{valid-route}"
+invalid-url = "#{server.url}#{invalid-route}"
 
 default-response-fn = (req, res) ->
   if req.url is '/valid'
@@ -23,6 +26,9 @@ default-response-fn = (req, res) ->
   else if req.url is '/invalid'
     res.setHeader('set-cookie', 'foo=bar; Domain=foo.com')
   res.end 'okay'
+
+add-route-response server, valid-route, default-response-fn
+add-route-response server, invalid-route, default-response-fn
 
 desc 'Feature: Cookies', ->
   before (done) -> server.listen port, -> done!
