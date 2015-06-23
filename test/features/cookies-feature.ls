@@ -59,3 +59,41 @@ desc 'Feature: Cookies', ->
         expect(cookies[0].value).to.eq 'bar'
 
         done err
+
+  cont 'When a server sends a cookies from another domain', ->
+    jar = tag.jar!
+    options =
+      method: 'GET'
+      uri: invalid-url
+      jar: jar
+
+    o 'Does not create a cookie in jar', (done) ->
+      tag options, (err, res, body) ->
+        expect(err).to.eq null
+        expect(jar.getCookieString valid-url).to.eq ''
+        expect(jar.getCookies valid-url).to.eql []
+        expect(body).to.eq 'okay'
+        done err
+
+  cont 'When the jar is given a cookie', ->
+    jar = tag.jar!
+    err = null
+
+    try jar.setCookie tag.cookie('foo=bar'), validUrl
+    catch
+      err := e
+    cookies = jar.getCookies validUrl
+
+    o 'Sets the cookie', ->
+      expect(err).to.eq null
+      expect(cookies.length).to.eq 1
+      expect(cookies[0].key).to.eq 'foo'
+      expect(cookies[0].value).to.eq 'bar'
+
+  cont 'When using a Custom Store', ->
+    Store = ->
+    store = new Store!
+    jar = tag.jar store
+
+    o 'Sets the custom store to be the jar\'s store', ->
+      expect(jar._jar.store).to.eq store
